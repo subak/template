@@ -2,6 +2,7 @@
 # Name:    Subak the HTML Template Engine
 # Version: 0.2
 # Author:  Takahashi Hiroyuki
+# License: GPL Version 2
 */
 
 if ('undefined' == typeof(Subak)) {
