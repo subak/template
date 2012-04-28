@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" rel="stylesheet">
+  <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap-responsive.css" rel="stylesheet">
+  <script src="template.js"></script>
+  <script src="http://code.jquery.com/jquery-latest.js"></script>
+
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-transition.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-alert.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-modal.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-dropdown.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-scrollspy.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-tab.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-tooltip.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-popover.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-button.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-collapse.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-carousel.js"></script>
+    <script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-typeahead.js"></script>
+</head>
+<body>
+<div class="container">
+  <header class="page-header">
+    <h1>Subak/Template Demo</h1>
+  </header>
+
+  <div class="tabbable tabs-left">
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#tab1" data-toggle="tab">Section 1</a></li>
+      <li><a href="#tab2" data-toggle="tab">Section 2</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane active" id="tab1">
+        <!-- Section 1 -->
+        <table class="table table-bordered table-condensed">
+          <tr><th>title</th><td>${title}</td></tr>
+          <tr><th>link</th><td>${link}</td></tr>
+          <tr><th>description</th><td>${description}</td></tr>
+          <tr><th>modified</th><td>${modified}</td></tr>
+          <tr><th>generator</th><td>${generator}</td></tr>
+          <tr><th>items</th><td>
+            <table class="table table-bordered table-condensed" data-tpl-block="items">
+              <tr><th>title</th><td>${title}</td></tr>
+              <tr><th>link</th><td>${link}</td></tr>
+              <tr><th>media</th><td>
+                <table class="table table-bordered table-condensed" data-tpl-block="media">
+                  <tr><th>m</th><td>${m}</td></tr>
+                </table>
+              </td></tr>
+              <tr><th>date_taken</th><td>${date_taken}</td></tr>
+              <tr><th>description</th><td data-tpl-append="${description}"></td></tr>
+              <tr><th>published</th><td>${published}</td></tr>
+              <tr><th>author</th><td>${author}</td></tr>
+              <tr><th>author_id</th><td>${author_id}</td></tr>
+              <tr><th>tags</th><td>${tags}</td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </div>
+      <div class="tab-pane" id="tab2">
+        <!-- Section 2 -->
+        <div class="row">
+          <div class="span3">
+            <header class="page-header">
+              <h1>Cat, Dog</h1>
+            </header>
+            <ul class="thumbnails">
+              <li class="span3" data-tpl-block="items"><div class="thumbnail">
+                <img src="${m}" data-tpl-block="media">
+                <div class="caption" data-tpl-veil><h5>${title}</h5></div>
+              </div></li>
+            </ul>
+          </div>
+          <div class="span3">
+            <header class="page-header">
+              <h1>Cat</h1>
+            </header>
+            <ul class="thumbnails">
+              <li class="span3" data-tpl-block="items" data-tpl-remove-if="${tags}" data-tpl-remove-not-contain="cat"><div class="thumbnail">
+                <img src="${m}" data-tpl-block="media">
+                <div class="caption" data-tpl-veil><h5>${title}</h5></div>
+              </div></li>
+            </ul>
+          </div>
+          <div class="span3">
+            <header class="page-header">
+              <h1>Dog</h1>
+            </header>
+            <ul class="thumbnails">
+              <li class="span3" data-tpl-block="items" data-tpl-remove-if="${tags}" data-tpl-remove-not-contain="dog"><div class="thumbnail">
+                <img src="${m}" data-tpl-block="media">
+                <div class="caption" data-tpl-veil><h5>${title}</h5></div>
+              </div></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style type="text/css">
+  #loading {
+    left:     0px;
+    top:      0px;
+    position: fixed;
+    width:    100%;
+    height:   100%;
+    background-color:    white;
+    background-image:    url(img/103.gif);
+    background-repeat:   no-repeat;
+    background-position: center center;
+    /*opacity:0.7;*/
+    /*z-index:9999;*/
+  }
+</style>
+
+<div id="loading" data-tpl-remove><noscript>It cant't show on your browser.</noscript></div>
+
+<script type="text/javascript">
+$.getJSON("http://api.flickr.com/services/feeds/photos_public.gne?jsoncallback=?",
+  {
+    tags:    "cat, dog",
+    tagmode: "any",
+    format:  "json"
+  },
+  function( data ) {
+    tpl = new Subak.Template(document.documentElement);
+    tpl.load(data);
+    tpl.close();
+  });
+</script>
+
+</body>
+</html>
