@@ -1,2 +1,3 @@
-/test/*
-!/test/.gitkeep
+/.bundle
+/Gemfile.lock
+/vender
