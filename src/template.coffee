@@ -93,15 +93,6 @@ class Subak.Template
       alert 'error'
       throw new Error 'this template can not reset'
 
-    # try
-    #   @parentNode.insertBefore doc, @nextSibling
-    #   @parentNode.removeChild @doc
-    # catch e
-    #   console.log '<<< BEGIN'
-    #   console.log doc.parentNode
-    #   console.log @nextSibling.parentNode
-    #   console.log '>>> END'
-
     @doc = doc
 
   load: (data, namespace=null)->
@@ -264,16 +255,12 @@ class Subak.Template
             else
               ##
               # 属性
-              #hasVar = false
               for attr in child.attributes
-                if matches = attr.nodeValue.match /\$\{[^}]+\}/g
+                if matches = "#{attr.nodeValue}".match /\$\{[^}]+\}/g
                   for match in matches
                     vars[match] = [] if !vars[match]?
                     vars[match].push attr
                     @valueNodes.push attr
-                  #hasVar = true
-                  # tracking
-                  #@track_node child, 'var' if hasVar
 
               ##
               # childNodesが0の時どういう扱いになるか
@@ -294,11 +281,12 @@ class Subak.Template
     ##
     # 自身の属性を追加
     for attr in doc.attributes
-      if matches = attr.nodeValue.match /\$\{[^}]+\}/g
+      if matches = "#{attr.nodeValue}".match /\$\{[^}]+\}/g
         for match in matches
           vars[match] = [] if !vars[match]?
           vars[match].push attr
           @valueNodes.push attr
+
     ##
     # 自身をトラッキング
     @track_node doc, 'veil' if doc.getAttributeNode(@veil)?
@@ -306,7 +294,6 @@ class Subak.Template
     @track_node doc, 'remove-if' if doc.getAttributeNode(@removeIf)?
     @track_node doc, 'insert_before' if doc.getAttributeNode(@insertBefore)?
     @track_node doc, 'append' if doc.getAttributeNode(@append)?
-
 
     ##
     # カレントスコープの変数、ブロックをセット
