@@ -1,36 +1,41 @@
 /*
 # Name:    Subak the HTML Template Engine
-# Version: 0.2.1
+# Version: 0.2
 # Author:  Takahashi Hiroyuki
 # License: GPL Version 2
 */
+
 
 if ('undefined' == typeof(Subak)) {
   Subak = {}
 }
 ;
+
 Subak.Template = (function() {
 
   function Template(doc, opt) {
-    var _ref, _ref2;
+    var _ref, _ref1;
     this.doc = doc;
-    if (opt == null) opt = {};
+    if (opt == null) {
+      opt = {};
+    }
     if (!(this.doc != null) || !(this.doc.childNodes != null)) {
       throw new TypeError('document must not be null');
     }
     this.resetable = (_ref = (opt['resetable'] != null) && opt['resetable']) != null ? _ref : {
       "true": false
     };
-    if (this.resetable) this.replica = this.doc.cloneNode(true);
-    this.prefix = (_ref2 = opt['prefix']) != null ? _ref2 : 'data-tpl-';
-    this.id = "" + this.prefix + "id";
+    if (this.resetable) {
+      this.replica = this.doc.cloneNode(true);
+    }
+    this.parentNode = this.doc.parentNode;
+    this.prefix = (_ref1 = opt['prefix']) != null ? _ref1 : 'data-tpl-';
     this.block = "" + this.prefix + "block";
     this.veil = "" + this.prefix + "veil";
     this.append = "" + this.prefix + "append";
     this.insertBefore = "" + this.prefix + "insert_before";
     this.remove = "" + this.prefix + "remove";
     this.removeIf = "" + this.remove + "-if";
-    this.removeIfId = "" + this.remove + "-if-id";
     this.removeEmpty = "" + this.remove + "-empty";
     this.removeEqual = "" + this.remove + "-equal";
     this.removeContain = "" + this.remove + "-contain";
@@ -41,21 +46,17 @@ Subak.Template = (function() {
     this.removeNotContain = "" + this.remove + "-not-contain";
     this.removeNotStartWith = "" + this.remove + "-not-start_with";
     this.removeNotEndWith = "" + this.remove + "-not-end_with";
-    this.removeIdExist = "" + this.remove + "-id-exist";
-    this.removeIdNotExist = "" + this.remove + "-id-not-exist";
     this.removeRegex = "" + this.remove + "-regex";
     this.removeNotRegex = "" + this.remove + "-not-regex";
     this.init_track();
   }
 
   Template.prototype.init_track = function() {
-    this.idNodes = [];
     this.varNodes = [];
     this.blockNodes = [];
     this.veilNodes = [];
     this.removeNodes = [];
     this.removeIfNodes = [];
-    this.removeIfIdNodes = [];
     this.insertBeforeNodes = [];
     this.appendNodes = [];
     return this.valueNodes = [];
@@ -64,9 +65,6 @@ Subak.Template = (function() {
   Template.prototype.track_node = function(node, type) {
     var exists, nodes, _i, _len, _node;
     switch (type) {
-      case 'id':
-        nodes = this.idNodes;
-        break;
       case 'var':
         nodes = this.varNodes;
         break;
@@ -81,9 +79,6 @@ Subak.Template = (function() {
         break;
       case 'remove-if':
         nodes = this.removeIfNodes;
-        break;
-      case 'remove-if-id':
-        nodes = this.removeIfIdNodes;
         break;
       case 'insert_before':
         nodes = this.insertBeforeNodes;
@@ -102,142 +97,128 @@ Subak.Template = (function() {
         break;
       }
     }
-    if (!exists) return nodes.push(node);
+    if (!exists) {
+      return nodes.push(node);
+    }
   };
 
   Template.prototype.reset = function() {
-    var attr, doc, _i, _len, _ref, _results;
-    if (!this.resetable) throw new Error('this template not allow to reset');
-    if (!(this.doc.parentNode != null)) {
-      throw new Error('this template can not reset');
+    var doc;
+    if (!this.resetable) {
+      throw new Error('this template not allow to reset');
     }
     doc = this.replica.cloneNode(true);
-    while (this.doc.attributes[0] != null) {
-      this.doc.removeAttribute(this.doc.attributes[0].nodeName);
+    if (this.doc.parentNode != null) {
+      this.doc.parentNode.insertBefore(doc, this.doc);
+      this.doc.parentNode.removeChild(this.doc);
+    } else if ((this.insertBefore != null) && (this.insertBefore.parentNode != null)) {
+      this.insertBefore.parentNode.insertBefore(doc, this.insertBefore);
+    } else if ((this.parentNode != null) && (this.parentNode.parentNode != null)) {
+      this.parentNode.appendChild(doc);
+    } else {
+      alert('error');
+      throw new Error('this template can not reset');
     }
-    _ref = doc.attributes;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      attr = _ref[_i];
-      this.doc.setAttribute(attr.nodeName, attr.nodeValue);
-    }
-    while (this.doc.childNodes[0] != null) {
-      this.doc.removeChild(this.doc.childNodes[0]);
-    }
-    _results = [];
-    while (doc.childNodes[0] != null) {
-      _results.push(this.doc.appendChild(doc.childNodes[0]));
-    }
-    return _results;
+    return this.doc = doc;
   };
 
   Template.prototype.load = function(data, namespace) {
-    if (namespace == null) namespace = null;
-    if (!(data != null)) throw new TypeError('data must not be null');
+    if (namespace == null) {
+      namespace = null;
+    }
+    if (!(data != null)) {
+      throw new TypeError('data must not be null');
+    }
     this.ns = namespace;
     if ("[object String]" === Object.prototype.toString.call(this.ns)) {
-      if (0 === this.ns.length) throw new TypeError('namespace must not be empty');
+      if (0 === this.ns.length) {
+        throw new TypeError('namespace must not be empty');
+      }
     }
     this.varsStack = [];
     return this.template(this.doc, data);
   };
 
   Template.prototype.close = function() {
-    var a, b, child, div, existId, html, id, node, parent, res, _i, _j, _k, _l, _len, _len10, _len11, _len2, _len3, _len4, _len5, _len6, _len7, _len8, _len9, _m, _n, _o, _p, _q, _r, _ref, _ref10, _ref11, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _s;
+    var a, b, div, html, node, parent, res, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _len7, _m, _n, _o, _p, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
     _ref = this.valueNodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       node = _ref[_i];
       node.nodeValue = node.nodeValue.replace(/\$\{[^}]*\}/g, '');
     }
-    _ref2 = this.appendNodes;
-    for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-      node = _ref2[_j];
+    _ref1 = this.appendNodes;
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      node = _ref1[_j];
       if ((html = node.getAttribute(this.append)) && html !== '') {
         div = node.ownerDocument.createElement('div');
         div.innerHTML = html;
         while (div.childNodes[0] != null) {
           node.appendChild(div.childNodes[0]);
         }
-        delete div;
+        div = null;
         node.removeAttribute(this.append);
       }
     }
-    _ref3 = this.insertBeforeNodes;
-    for (_k = 0, _len3 = _ref3.length; _k < _len3; _k++) {
-      node = _ref3[_k];
+    _ref2 = this.insertBeforeNodes;
+    for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+      node = _ref2[_k];
       if ((html = node.getAttribute(this.insertBefore))) {
         div = node.ownerDocument.createElement('div');
         div.innerHTML = html;
-        _ref4 = div.childNodes;
-        for (_l = 0, _len4 = _ref4.length; _l < _len4; _l++) {
-          child = _ref4[_l];
+        while (div.childNodes[0] != null) {
           node.parentNode.insertBefore(child, node);
         }
-        delete div;
+        div = null;
         node.removeAttribute(this.insertBefore);
       }
     }
-    _ref5 = this.blockNodes;
-    for (_m = 0, _len5 = _ref5.length; _m < _len5; _m++) {
-      node = _ref5[_m];
-      if ((node.getAttributeNode(this.block) != null) && (node.parentNode != null)) {
+    _ref3 = this.blockNodes;
+    for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+      node = _ref3[_l];
+      if (node.getAttributeNode(this.block) != null) {
         node.parentNode.removeChild(node);
       }
     }
-    _ref6 = this.varNodes;
-    for (_n = 0, _len6 = _ref6.length; _n < _len6; _n++) {
-      node = _ref6[_n];
+    _ref4 = this.varNodes;
+    for (_m = 0, _len4 = _ref4.length; _m < _len4; _m++) {
+      node = _ref4[_m];
       parent = node;
       while (parent.parentNode != null) {
         parent.removeAttribute(this.veil);
-        if (parent === this.doc) break;
+        if (parent === this.doc) {
+          break;
+        }
         parent = parent.parentNode;
       }
     }
-    _ref7 = this.veilNodes;
-    for (_o = 0, _len7 = _ref7.length; _o < _len7; _o++) {
-      node = _ref7[_o];
-      if ((node.getAttributeNode(this.veil) != null) && (node.parentNode != null)) {
+    _ref5 = this.veilNodes;
+    for (_n = 0, _len5 = _ref5.length; _n < _len5; _n++) {
+      node = _ref5[_n];
+      if (node.getAttributeNode(this.veil) != null) {
         node.parentNode.removeChild(node);
       }
     }
-    _ref8 = this.removeIfNodes;
-    for (_p = 0, _len8 = _ref8.length; _p < _len8; _p++) {
-      node = _ref8[_p];
+    _ref6 = this.removeIfNodes;
+    for (_o = 0, _len6 = _ref6.length; _o < _len6; _o++) {
+      node = _ref6[_o];
       a = node.getAttribute(this.removeIf) || '';
       node.removeAttribute(this.removeIf);
       res = node.getAttributeNode(this.removeEmpty) != null ? (b = node.getAttribute(this.removeEmpty) || '', node.removeAttribute(this.removeEmpty), a.length === 0) : node.getAttributeNode(this.removeNotEmpty) != null ? (b = node.getAttribute(this.removeNotEmpty) || '', node.removeAttribute(this.removeNotEmpty), a.length > 0) : node.getAttributeNode(this.removeEqual) != null ? (b = node.getAttribute(this.removeEqual) || '', node.removeAttribute(this.removeEqual), a === b) : node.getAttributeNode(this.removeNotEqual) != null ? (b = node.getAttribute(this.removeNotEqual) || '', node.removeAttribute(this.removeNotEqual), a !== b) : node.getAttributeNode(this.removeContain) != null ? (b = node.getAttribute(this.removeContain) || '', node.removeAttribute(this.removeContain), a.indexOf(b) >= 0) : node.getAttributeNode(this.removeNotContain) != null ? (b = node.getAttribute(this.removeNotContain) || '', node.removeAttribute(this.removeNotContain), a.indexOf(b) <= -1) : node.getAttributeNode(this.removeStartWith) != null ? (b = node.getAttribute(this.removeStartWith) || '', node.removeAttribute(this.removeStartWith), a.indexOf(b) === 0) : node.getAttributeNode(this.removeNotStartWith) != null ? (b = node.getAttribute(this.removeNotStartWith) || '', node.removeAttribute(this.removeNotStartWith), a.indexOf(b) !== 0) : node.getAttributeNode(this.removeEndWith) != null ? (b = node.getAttribute(this.removeEndWith) || '', node.removeAttribute(this.removeEndWith), res = a.lastIndexOf(b), res >= 0 && a.length - b.length === a.lastIndexOf(b)) : node.getAttributeNode(this.removeNotEndWith) != null ? (b = node.getAttribute(this.removeNotEndWith) || '', node.removeAttribute(this.removeNotEndWith), res = a.lastIndexOf(b), res < 0 || (a.length - b.length) !== a.lastIndexOf(b)) : void 0;
-      if (res && (node.parentNode != null)) node.parentNode.removeChild(node);
-    }
-    existId = {};
-    _ref9 = this.idNodes;
-    for (_q = 0, _len9 = _ref9.length; _q < _len9; _q++) {
-      node = _ref9[_q];
-      existId[node.getAttribute(this.id)] |= node.parentNode != null;
-    }
-    _ref10 = this.removeIfIdNodes;
-    for (_r = 0, _len10 = _ref10.length; _r < _len10; _r++) {
-      node = _ref10[_r];
-      id = node.getAttribute(this.removeIfId);
-      node.removeAttribute(this.removeIfId);
-      if (node.getAttributeNode(this.removeIdExist)) {
-        res = (existId[id] != null) && existId[id];
-        node.removeAttribute(this.removeIdExist);
-      } else if (node.getAttributeNode(this.removeIdNotExist)) {
-        res = !(existId[id] != null) || !existId[id];
-        node.removeAttribute(this.removeIdNotExist);
+      if (res && (node.parentNode != null)) {
+        node.parentNode.removeChild(node);
       }
-      if (res && (node.parentNode != null)) node.parentNode.removeChild(node);
     }
-    _ref11 = this.removeNodes;
-    for (_s = 0, _len11 = _ref11.length; _s < _len11; _s++) {
-      node = _ref11[_s];
-      if (node.parentNode != null) node.parentNode.removeChild(node);
+    _ref7 = this.removeNodes;
+    for (_p = 0, _len7 = _ref7.length; _p < _len7; _p++) {
+      node = _ref7[_p];
+      node.parentNode.removeChild(node);
     }
-    return this.init_track();
+    this.init_track();
+    return this.nextSibling = this.doc.nextSibling;
   };
 
   Template.prototype.template = function(doc, data, previous_vars) {
-    var attr, blockname, blocks, child, data_blocks, data_vars, datas, i, job, jobAdded, key, kipple, match, matches, newVars, node, nodes, parentVars, re, stack, tpl, value, varname, varnames, vars, _i, _j, _k, _l, _len, _len10, _len11, _len2, _len3, _len4, _len5, _len6, _len7, _len8, _len9, _m, _n, _o, _p, _q, _r, _ref, _ref2, _ref3, _ref4, _ref5;
+    var attr, blockname, blocks, child, data_blocks, data_vars, datas, i, job, jobAdded, key, kipple, match, matches, newVars, node, nodes, parentVars, re, stack, tpl, value, varname, varnames, vars, _i, _j, _k, _l, _len, _len1, _len10, _len2, _len3, _len4, _len5, _len6, _len7, _len8, _len9, _m, _n, _o, _p, _q, _r, _ref, _ref1, _ref2, _ref3, _ref4, _s, _t;
     vars = {};
     blocks = {};
     stack = [];
@@ -255,16 +236,15 @@ Subak.Template = (function() {
             if (matches = child.nodeValue.match(/\$\{[^}]+\}/g)) {
               for (_i = 0, _len = matches.length; _i < _len; _i++) {
                 match = matches[_i];
-                if (!(vars[match] != null)) vars[match] = [];
+                if (!(vars[match] != null)) {
+                  vars[match] = [];
+                }
                 vars[match].push(child);
                 this.valueNodes.push(child);
               }
             }
             break;
           case 1:
-            if (child.getAttributeNode(this.id) != null) {
-              this.track_node(child, 'id');
-            }
             if (child.getAttributeNode(this.veil) != null) {
               this.track_node(child, 'veil');
             }
@@ -274,9 +254,6 @@ Subak.Template = (function() {
             if (child.getAttributeNode(this.removeIf) != null) {
               this.track_node(child, 'remove-if');
             }
-            if (child.getAttributeNode(this.removeIfId) != null) {
-              this.track_node(child, 'remove-if-id');
-            }
             if (child.getAttributeNode(this.insertBefore) != null) {
               this.track_node(child, 'insert_before');
             }
@@ -285,23 +262,27 @@ Subak.Template = (function() {
             }
             blockname = child.getAttribute('data-tpl-block');
             if ((blockname != null) && '' !== blockname.length) {
-              if (!(blocks[blockname] != null)) blocks[blockname] = [];
+              if (!(blocks[blockname] != null)) {
+                blocks[blockname] = [];
+              }
               blocks[blockname].push(child);
               this.track_node(child, 'block');
             } else {
               _ref = child.attributes;
-              for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
+              for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
                 attr = _ref[_j];
-                if (matches = attr.nodeValue.match(/\$\{[^}]+\}/g)) {
-                  for (_k = 0, _len3 = matches.length; _k < _len3; _k++) {
+                if (matches = ("" + attr.nodeValue).match(/\$\{[^}]+\}/g)) {
+                  for (_k = 0, _len2 = matches.length; _k < _len2; _k++) {
                     match = matches[_k];
-                    if (!(vars[match] != null)) vars[match] = [];
+                    if (!(vars[match] != null)) {
+                      vars[match] = [];
+                    }
                     vars[match].push(attr);
                     this.valueNodes.push(attr);
                   }
                 }
               }
-              jobAdded = (_ref2 = 1 <= child.childNodes.length) != null ? _ref2 : {
+              jobAdded = (_ref1 = 1 <= child.childNodes.length) != null ? _ref1 : {
                 "true": false
               };
               if (jobAdded) {
@@ -315,35 +296,41 @@ Subak.Template = (function() {
               }
             }
         }
-        if (jobAdded) break;
+        if (jobAdded) {
+          break;
+        }
         job.i++;
       }
     }
-    _ref3 = doc.attributes;
-    for (_l = 0, _len4 = _ref3.length; _l < _len4; _l++) {
-      attr = _ref3[_l];
-      if (matches = attr.nodeValue.match(/\$\{[^}]+\}/g)) {
-        for (_m = 0, _len5 = matches.length; _m < _len5; _m++) {
+    _ref2 = doc.attributes;
+    for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
+      attr = _ref2[_l];
+      if (matches = ("" + attr.nodeValue).match(/\$\{[^}]+\}/g)) {
+        for (_m = 0, _len4 = matches.length; _m < _len4; _m++) {
           match = matches[_m];
-          if (!(vars[match] != null)) vars[match] = [];
+          if (!(vars[match] != null)) {
+            vars[match] = [];
+          }
           vars[match].push(attr);
           this.valueNodes.push(attr);
         }
       }
     }
-    if (doc.getAttributeNode(this.id) != null) this.track_node(doc, 'id');
-    if (doc.getAttributeNode(this.veil) != null) this.track_node(doc, 'veil');
-    if (doc.getAttributeNode(this.remove) != null) this.track_node(doc, 'remove');
+    if (doc.getAttributeNode(this.veil) != null) {
+      this.track_node(doc, 'veil');
+    }
+    if (doc.getAttributeNode(this.remove) != null) {
+      this.track_node(doc, 'remove');
+    }
     if (doc.getAttributeNode(this.removeIf) != null) {
       this.track_node(doc, 'remove-if');
-    }
-    if (doc.getAttributeNode(this.removeIfId) != null) {
-      this.track_node(doc, 'remove-if-id');
     }
     if (doc.getAttributeNode(this.insertBefore) != null) {
       this.track_node(doc, 'insert_before');
     }
-    if (doc.getAttributeNode(this.append) != null) this.track_node(doc, 'append');
+    if (doc.getAttributeNode(this.append) != null) {
+      this.track_node(doc, 'append');
+    }
     data_vars = {};
     data_blocks = {};
     for (key in data) {
@@ -357,7 +344,7 @@ Subak.Template = (function() {
         case '[object Boolean]':
         case '[object Null]':
         case '[object Undefined]':
-          data_vars[key] = value != null ? value : "";
+          data_vars[key] = value;
           break;
         default:
           data_blocks[key] = [value];
@@ -365,12 +352,12 @@ Subak.Template = (function() {
     }
     newVars = {};
     i = 1;
-    _ref4 = this.varsStack.reverse();
-    for (_n = 0, _len6 = _ref4.length; _n < _len6; _n++) {
-      parentVars = _ref4[_n];
+    _ref3 = this.varsStack.reverse();
+    for (_n = 0, _len5 = _ref3.length; _n < _len5; _n++) {
+      parentVars = _ref3[_n];
       for (key in parentVars) {
         value = parentVars[key];
-        for (kipple = 0; 0 <= i ? kipple <= i : kipple >= i; 0 <= i ? kipple++ : kipple--) {
+        for (kipple = _o = 0; 0 <= i ? _o <= i : _o >= i; kipple = 0 <= i ? ++_o : --_o) {
           key = "@" + key;
         }
         newVars[key] = value;
@@ -378,9 +365,9 @@ Subak.Template = (function() {
       i += 1;
     }
     this.varsStack.reverse();
-    _ref5 = this.varsStack;
-    for (_o = 0, _len7 = _ref5.length; _o < _len7; _o++) {
-      parentVars = _ref5[_o];
+    _ref4 = this.varsStack;
+    for (_p = 0, _len6 = _ref4.length; _p < _len6; _p++) {
+      parentVars = _ref4[_p];
       for (key in parentVars) {
         value = parentVars[key];
         newVars[key] = value;
@@ -400,17 +387,23 @@ Subak.Template = (function() {
     for (varname in newVars) {
       data = newVars[varname];
       varnames = [varname];
-      if (this.ns != null) varnames.push("" + this.ns + ":" + varname);
-      for (_p = 0, _len8 = varnames.length; _p < _len8; _p++) {
-        varname = varnames[_p];
+      if (this.ns != null) {
+        varnames.push("" + this.ns + ":" + varname);
+      }
+      for (_q = 0, _len7 = varnames.length; _q < _len7; _q++) {
+        varname = varnames[_q];
         if (nodes = vars["${" + varname + "}"]) {
           varname = '\\$\\{' + varname + '\\}';
-          for (_q = 0, _len9 = nodes.length; _q < _len9; _q++) {
-            node = nodes[_q];
+          for (_r = 0, _len8 = nodes.length; _r < _len8; _r++) {
+            node = nodes[_r];
             re = new RegExp(varname, 'g');
             node.nodeValue = node.nodeValue.replace(re, data);
-            if (node.nodeType === 2) this.track_node(node.ownerElement, 'var');
-            if (node.nodeType === 3) this.track_node(node.parentNode, 'var');
+            if (node.nodeType === 2) {
+              this.track_node(node.ownerElement, 'var');
+            }
+            if (node.nodeType === 3) {
+              this.track_node(node.parentNode, 'var');
+            }
           }
         }
       }
@@ -418,10 +411,10 @@ Subak.Template = (function() {
     for (blockname in data_blocks) {
       datas = data_blocks[blockname];
       if (nodes = blocks[blockname]) {
-        for (_r = 0, _len10 = nodes.length; _r < _len10; _r++) {
-          node = nodes[_r];
+        for (_s = 0, _len9 = nodes.length; _s < _len9; _s++) {
+          node = nodes[_s];
           previous_vars = null;
-          for (i = 0, _len11 = datas.length; i < _len11; i++) {
+          for (i = _t = 0, _len10 = datas.length; _t < _len10; i = ++_t) {
             data = datas[i];
             tpl = node.cloneNode(true);
             data_vars['_i'] = i;
