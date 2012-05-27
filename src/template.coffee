@@ -125,9 +125,8 @@ class Subak.Template
         div = node.ownerDocument.createElement 'div'
         div.innerHTML = html
         while div.childNodes[0]?
-        #for child in div.childNodes
           node.appendChild div.childNodes[0]
-        delete div
+        div = null
         node.removeAttribute @append
 
     # insertBefore
@@ -135,9 +134,9 @@ class Subak.Template
       if (html = node.getAttribute(@insertBefore))
         div = node.ownerDocument.createElement 'div'
         div.innerHTML = html
-        for child in div.childNodes
+        while div.childNodes[0]?
           node.parentNode.insertBefore child, node
-        delete div
+        div = null
         node.removeAttribute @insertBefore
 
     # touchされなかったblockの削除
