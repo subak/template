@@ -137,7 +137,7 @@ class Subak.Template
     # veil消し 先祖まで遡る
     for node in @varNodes
       parent = node
-      while parent.parentNode?
+      while parent? and parent.parentNode?
         parent.removeAttribute @veil
         break if parent == @doc
         parent = parent.parentNode

@@ -183,7 +183,7 @@ Subak.Template = (function() {
     for (_m = 0, _len4 = _ref4.length; _m < _len4; _m++) {
       node = _ref4[_m];
       parent = node;
-      while (parent.parentNode != null) {
+      while ((parent != null) && (parent.parentNode != null)) {
         parent.removeAttribute(this.veil);
         if (parent === this.doc) {
           break;
