@@ -100,9 +100,9 @@ class Subak.Template
     @ns = namespace
     if "[object String]" == Object.prototype.toString.call(@ns)
       throw new TypeError 'namespace must not be empty' if 0 == @ns.length
-
     @varsStack = []
     @template @doc, data
+    @
 
   close: ->
 
@@ -247,7 +247,7 @@ class Subak.Template
             
             ##
             # blockであるか
-            blockname = child.getAttribute 'data-tpl-block'
+            blockname = child.getAttribute @block
             if blockname? and '' != blockname.length
               blocks[blockname] = [] if !blocks[blockname]?
               blocks[blockname].push child
